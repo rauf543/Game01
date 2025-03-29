@@ -1,101 +1,169 @@
-Task Instructions: CS-01 - Initialize Unity Project & Version Control
-Objective
-Set up a new Unity project using the 2D URP template and initialize version control with Git on GitHub. Establish a standardized folder structure and adhere strictly to the provided commit, branching, pull request, and code review guidelines.
+# Task Instructions for AI Agent: CS-NET-01 - Basic Backend Setup & API Stub  ## Overview This task involves creating a minimal backend service using Node.js and Express with a SQLite database connection. You must implement stub API endpoints for user login, retrieving a player roster, and saving player character data. Your solution should strictly adhere to the following specifications without adding any extra functionality or unnecessary complexity.  ## Requirements  ### Tech Stack - **Primary Framework:** Node.js with Express   - **Database:** SQLite (file-based) using a Node.js library such as `sqlite3` - **Logging:** Use `console.log()` for basic logging of incoming requests, errors, and key actions. - **Error Handling:** Use minimal `try...catch` blocks; every endpoint must return a JSON object with a consistent structure.  ### API Endpoints  #### 1. User Login (POST `/api/auth/login`) - **Request Payload:**     ```json   {"username": "string", "password": "string"} 
 
-Detailed Instructions
-Unity Project Setup
-Template: Use the 2D URP template.
+Response Payload (Success):
 
-Unity Version: Use the default Unity version (no specific version is required).
 
-Project Configuration: Ensure the project is configured for a 2D environment with the Universal Render Pipeline. Do not modify any settings beyond those required for this configuration.
 
-Folder Structure
-Standard Directories: Create a clear and minimal folder structure within the project. Include, at minimum:
+json
+Copy
 
-Assets: Root folder for all Unity assets.
+{"success": true, "message": "Login successful", "userId": "some_unique_user_id"} 
 
-Scenes: For all scene files.
+Response Payload (Failure):
 
-Scripts: For all source code.
 
-Art: For sprites and art assets (if applicable).
 
-Prefabs: For reusable game objects.
+json
+Copy
 
-Documentation: For any related project documentation.
+{"success": false, "message": "Invalid credentials"} 
 
-Restrictions: Do not add extra folders or files that are not explicitly required by this task.
+Note:
 
-Version Control Setup
-Git Initialization:
+Do not implement full authentication logic; use hardcoded or simple value checks for stub behavior.
 
-Initialize a Git repository in the Unity project folder.
+2. Get Player Roster/Data (GET /api/player/roster)
+Authentication:
 
-Connect this repository to GitHub.
+Assume an authenticated user (authentication mechanism can be simulated via a header or session; full implementation is not required).
 
-Branching Strategy: Establish the following branches:
+Response Payload (Success):
 
-main: Contains production-ready code (only merge from develop after thorough testing).
 
-develop: Contains the current integration state; feature branches merge here.
 
-feature/CS-01-initialize-unity-project: Create this branch off develop for all changes related to this task.
+json
+Copy
 
-Commit Guidelines:
+{   "success": true,   "roster": [     {"characterId": "char1", "level": 1, "xp": 0, "maxHp": 100, "maxEnergy": 50},     {"characterId": "char2", ...}   ] } 
 
-Use atomic commits that capture one logical change at a time.
+Return an empty array if no characters exist.
 
-Follow the Conventional Commits standard. For example:
+Response Payload (Failure):
 
-feat(core): Initialize Unity project with 2D URP template
 
-Pull Request Guidelines:
 
-When merging, create a pull request from the feature branch into develop.
+json
+Copy
 
-The PR title and description must include the task ID and clearly explain what was changed, why, and how.
+{"success": false, "message": "Error fetching roster"} 
 
-Keep PRs focused only on changes relevant to this task.
+3. Save Player Roster/Data (POST or PUT /api/player/character or /api/player/character/{characterId})
+Request Payload:
 
-Agent-Specific Instructions: What to Do and What NOT to Do
-Do:
 
-Follow the steps exactly as described.
 
-Keep changes minimal and strictly within the task scope.
+json
+Copy
 
-Use straightforward and direct methods to implement changes.
+{"characterId": "char1", "level": 2, "xp": 150, "maxHp": 110, "maxEnergy": 55} 
 
-Adhere exactly to the specified folder structure and Git branching/commit standards.
+Response Payload (Success):
 
-Provide a final summary detailing:
 
-A list of all created or modified files.
 
-Key code/configuration excerpts.
+json
+Copy
 
-A brief explanation of each change to verify its relevance to this task.
+{"success": true, "message": "Character saved", "character": {updated_character_data}} 
 
-Do NOT:
+Response Payload (Failure):
 
-Add any extra features, components, or files beyond what is explicitly required.
 
-Modify or refactor any default or unrelated Unity files.
 
-Introduce unnecessary complexity or roundabout methods.
+json
+Copy
 
-Bloat the codebase with redundant or unrelated code.
+{"success": false, "message": "Error saving character"} 
 
-Make changes outside the defined scope of initializing the project and version control setup.
+Note:
 
-Final Check
-Before finalizing, ensure:
+For the stub, simply log the received data and return a success response without complex validation or storage logic.
 
-The Unity project is created using the 2D URP template.
+Database Connection
+Setup:
 
-The standard folder structure is present and no extra files have been added.
+Establish a basic SQLite connection.
 
-Git is initialized, connected to GitHub, and the branching strategy is correctly implemented.
+Do not design a complex schema; only include the minimal code required to demonstrate connectivity.
 
-A clear, concise summary of all changes is provided for review.
+Documentation
+README.md:
+
+Create a simple README in the backend project directory.
+
+Document each endpoint’s path, expected request payload, and sample responses.
+
+Do not include any additional documentation or extra features beyond what is specified.
+
+What to Do
+Project Initialization:
+
+Set up a Node.js project using npm init.
+
+Install required dependencies such as Express and sqlite3.
+
+API Implementation:
+
+Implement the following endpoints exactly as specified:
+
+POST /api/auth/login
+
+GET /api/player/roster
+
+POST/PUT /api/player/character (choose one method consistently)
+
+Ensure each endpoint returns the precise JSON structure detailed above.
+
+Database Integration:
+
+Configure a simple SQLite connection for local development.
+
+Only implement the minimal functionality needed to support the stub endpoints.
+
+Logging & Error Handling:
+
+Add basic logging (console.log()) for each incoming request and error.
+
+Use simple try...catch blocks to catch errors and respond with the specified JSON error messages.
+
+Documentation:
+
+Create a README.md file that documents:
+
+A brief project overview.
+
+All API endpoints with sample requests/responses.
+
+Do not include any extra documentation or details not required.
+
+What NOT to Do
+Avoid Unnecessary Tasks:
+
+Do not implement any features or endpoints that are not explicitly specified.
+
+Do not add extra middleware, libraries, or abstractions beyond the minimal requirements.
+
+Avoid Code Bloat:
+
+Do not introduce extra logging, error handling, or complex architectural patterns.
+
+Do not over-engineer or add any extra functionality like full authentication, token management, or additional endpoints.
+
+Stick to the Spec:
+
+Do not modify endpoint paths, payload structures, or response formats.
+
+Do not implement any changes that deviate from the given instructions.
+
+Final Deliverable
+At the end of the task, before submission, provide a comprehensive summary that includes:
+
+An overview of all changes made.
+
+A list of modified or added files.
+
+Relevant code snippets highlighting key changes.
+
+A clear explanation of how each requirement was met.
+
+This summary is critical for the code review process and must be included as the final output.
