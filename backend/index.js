@@ -46,7 +46,15 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`API endpoints:`);
-  console.log(`  POST /api/auth/login`);
-  console.log(`  GET /api/player/roster`);
-  console.log(`  POST /api/player/character`);
+  console.log(`User CRUD Endpoints:`);
+  console.log(`  POST /api/auth/register - Create a new user`);
+  console.log(`  POST /api/auth/login - Authenticate a user`);
+  console.log(`  PUT /api/auth/user/:userID - Update a user`);
+  console.log(`  DELETE /api/auth/user/:userID - Delete a user`);
+  console.log(`Character CRUD Endpoints:`);
+  console.log(`  POST /api/player/character - Create a new character`);
+  console.log(`  GET /api/player/character/:characterID - Get a character by ID`);
+  console.log(`  GET /api/player/roster - Get all characters for a user`);
+  console.log(`  PUT /api/player/character/:characterID - Update a character`);
+  console.log(`  DELETE /api/player/character/:characterID - Delete a character`);
 });
