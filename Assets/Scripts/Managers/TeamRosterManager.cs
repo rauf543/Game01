@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,101 +9,187 @@ using UnityEngine;
 /// </summary>
 public class TeamRosterManager : MonoBehaviour
 {
-    // List to store all characters in the player's roster
-    private List<CharacterData> teamRoster = new List<CharacterData>();
+    // Dictionary to store all characters in the player's roster using characterId as key
+    private Dictionary<string, CharacterData> teamRoster = new Dictionary<string, CharacterData>();
+    
+    [SerializeField] private NetworkManager networkManager;
 
     // Public property to access the team roster
-    public List<CharacterData> TeamRoster => teamRoster;
+    public IReadOnlyCollection<CharacterData> TeamRoster => teamRoster.Values;
 
-    private void Awake()
+    private void Start()
     {
-        // Create default characters for testing purposes
-        CreateDefaultCharacters();
+        // Fetch roster from server on startup
+        FetchRoster();
     }
 
     /// <summary>
-    /// Creates and adds default character data for testing
+    /// Fetches the player's roster from the server
     /// </summary>
-    private void CreateDefaultCharacters()
+    private void FetchRoster()
     {
-        // Create first default character
-        CharacterData warrior = new CharacterData
-        {
-            CharacterName = "Valiant Knight",
-            CurrentLevel = 3,
-            CurrentXP = 250,
-            CurrentHP = 100,
-            MaxHP = 100,
-            CurrentEnergy = 50,
-            MaxEnergy = 50,
-            LearnedPassives = new List<PassiveSkill_SO>(),
-            CurrentRunDeck = new List<CardDefinition_SO>()
-        };
-
-        // Create second default character
-        CharacterData mage = new CharacterData
-        {
-            CharacterName = "Arcane Mage",
-            CurrentLevel = 2,
-            CurrentXP = 150,
-            CurrentHP = 75,
-            MaxHP = 75,
-            CurrentEnergy = 60,
-            MaxEnergy = 60,
-            LearnedPassives = new List<PassiveSkill_SO>(),
-            CurrentRunDeck = new List<CardDefinition_SO>()
-        };
-
-        // Create third default character
-        CharacterData ranger = new CharacterData
-        {
-            CharacterName = "Swift Ranger",
-            CurrentLevel = 2,
-            CurrentXP = 180,
-            CurrentHP = 85,
-            MaxHP = 85,
-            CurrentEnergy = 55,
-            MaxEnergy = 55,
-            LearnedPassives = new List<PassiveSkill_SO>(),
-            CurrentRunDeck = new List<CardDefinition_SO>()
-        };
-
-        // Add default characters to the team roster
-        AddCharacter(warrior);
-        AddCharacter(mage);
-        AddCharacter(ranger);
+        StartCoroutine(networkManager.WorkspaceRoster(OnRosterFetched));
     }
 
     /// <summary>
-    /// Adds a new character to the team roster
+    /// Callback for when the roster is fetched from the server
+    /// </summary>
+    /// <param name="characters">List of character data fetched from the server</param>
+    private void OnRosterFetched(List<CharacterData> characters)
+    {
+        if (characters == null)
+        {
+            Debug.LogError("Failed to fetch character roster from server");
+            return;
+        }
+
+        // Clear existing roster and populate with fetched data
+        teamRoster.Clear();
+        
+        foreach (CharacterData character in characters)
+        {
+            if (!string.IsNullOrEmpty(character.characterId))
+            {
+                teamRoster[character.characterId] = character;
+                Debug.Log($"Added character: {character.CharacterName} (ID: {character.characterId}) to the team roster");
+            }
+            else
+            {
+                Debug.LogWarning($"Character {character.CharacterName} has no ID and was not added to roster");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Adds a new character to the team roster and saves it to the server
     /// </summary>
     /// <param name="character">The CharacterData instance to add</param>
     public void AddCharacter(CharacterData character)
     {
-        if (character != null)
-        {
-            teamRoster.Add(character);
-            Debug.Log($"Added character: {character.CharacterName} to the team roster");
-        }
-        else
+        if (character == null)
         {
             Debug.LogWarning("Attempted to add a null character to the team roster");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(character.characterId))
+        {
+            Debug.LogWarning("Attempted to add a character without an ID to the team roster");
+            return;
+        }
+
+        // Add to local dictionary
+        teamRoster[character.characterId] = character;
+        Debug.Log($"Added character: {character.CharacterName} (ID: {character.characterId}) to the team roster");
+
+        // Save to server
+        SaveCharacterData(character);
+    }
+
+    /// <summary>
+    /// Handles character level-up and saves the updated data to the server
+    /// </summary>
+    /// <param name="characterId">ID of the character to level up</param>
+    /// <param name="newLevel">New level value</param>
+    /// <param name="newXP">New XP value</param>
+    /// <param name="newMaxHP">New MaxHP value</param>
+    /// <param name="newMaxEnergy">New MaxEnergy value</param>
+    public void LevelUpCharacter(string characterId, int newLevel, int newXP, int newMaxHP, int newMaxEnergy)
+    {
+        if (!teamRoster.TryGetValue(characterId, out CharacterData character))
+        {
+            Debug.LogWarning($"Character with ID {characterId} not found for level-up");
+            return;
+        }
+
+        // Update character data
+        character.CurrentLevel = newLevel;
+        character.CurrentXP = newXP;
+        character.MaxHP = newMaxHP;
+        character.MaxEnergy = newMaxEnergy;
+
+        Debug.Log($"Leveled up character: {character.CharacterName} (ID: {characterId}) to level {newLevel}");
+
+        // Save to server
+        SaveCharacterData(character);
+    }
+
+    /// <summary>
+    /// Adds a passive skill to a character and saves the updated data to the server
+    /// </summary>
+    /// <param name="characterId">ID of the character to add the passive skill to</param>
+    /// <param name="passiveSkill">The passive skill to add</param>
+    public void AddPassiveSkill(string characterId, PassiveSkill_SO passiveSkill)
+    {
+        if (!teamRoster.TryGetValue(characterId, out CharacterData character))
+        {
+            Debug.LogWarning($"Character with ID {characterId} not found for adding passive skill");
+            return;
+        }
+
+        if (passiveSkill == null)
+        {
+            Debug.LogWarning("Attempted to add a null passive skill");
+            return;
+        }
+
+        // Add the passive skill
+        character.LearnedPassives.Add(passiveSkill);
+        Debug.Log($"Added passive skill to character: {character.CharacterName} (ID: {characterId})");
+
+        // Save to server
+        SaveCharacterData(character);
+    }
+
+    /// <summary>
+    /// Saves character data to the server with retry logic
+    /// </summary>
+    /// <param name="character">Character data to save</param>
+    private void SaveCharacterData(CharacterData character)
+    {
+        StartCoroutine(SaveCharacterDataWithRetry(character));
+    }
+
+    /// <summary>
+    /// Helper method for saving character data with one retry attempt
+    /// </summary>
+    /// <param name="character">Character data to save</param>
+    private IEnumerator SaveCharacterDataWithRetry(CharacterData character)
+    {
+        bool saveSuccess = false;
+        
+        // First attempt
+        yield return networkManager.SaveCharacterData(character, success => saveSuccess = success);
+        
+        // If first attempt failed, retry once
+        if (!saveSuccess)
+        {
+            Debug.LogWarning($"First attempt to save character data failed for {character.CharacterName} (ID: {character.characterId}). Retrying...");
+            yield return networkManager.SaveCharacterData(character, success => saveSuccess = success);
+            
+            // If retry also failed, notify user
+            if (!saveSuccess)
+            {
+                Debug.LogError($"Failed to sync progress with server for character {character.CharacterName} (ID: {character.characterId}) after retry");
+                // Show notification to user (in a real implementation, this would use a UI manager or similar)
+                Debug.LogError("Failed to sync progress with server. Please check connection.");
+            }
         }
     }
 
     /// <summary>
-    /// Gets a character from the team roster by index
+    /// Gets a character from the team roster by ID
     /// </summary>
-    /// <param name="index">The index of the character</param>
-    /// <returns>The CharacterData at the specified index, or null if index is out of range</returns>
-    public CharacterData GetCharacter(int index)
+    /// <param name="characterId">The ID of the character to find</param>
+    /// <returns>The CharacterData with matching ID, or null if not found</returns>
+    public CharacterData GetCharacter(string characterId)
     {
-        if (index >= 0 && index < teamRoster.Count)
+        if (teamRoster.TryGetValue(characterId, out CharacterData character))
         {
-            return teamRoster[index];
+            return character;
         }
         
-        Debug.LogWarning($"Character index {index} is out of range");
+        Debug.LogWarning($"Character with ID {characterId} not found");
         return null;
     }
 
@@ -112,7 +200,15 @@ public class TeamRosterManager : MonoBehaviour
     /// <returns>The first CharacterData with matching name, or null if not found</returns>
     public CharacterData GetCharacterByName(string name)
     {
-        return teamRoster.Find(character => character.CharacterName == name);
+        foreach (CharacterData character in teamRoster.Values)
+        {
+            if (character.CharacterName == name)
+            {
+                return character;
+            }
+        }
+        
+        return null;
     }
 
     /// <summary>
@@ -125,21 +221,21 @@ public class TeamRosterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Removes a character from the team roster by index
+    /// Removes a character from the team roster by ID
     /// </summary>
-    /// <param name="index">The index of the character to remove</param>
+    /// <param name="characterId">The ID of the character to remove</param>
     /// <returns>True if removal was successful, false otherwise</returns>
-    public bool RemoveCharacter(int index)
+    public bool RemoveCharacter(string characterId)
     {
-        if (index >= 0 && index < teamRoster.Count)
+        if (teamRoster.TryGetValue(characterId, out CharacterData character))
         {
-            string name = teamRoster[index].CharacterName;
-            teamRoster.RemoveAt(index);
-            Debug.Log($"Removed character: {name} from the team roster");
+            string name = character.CharacterName;
+            teamRoster.Remove(characterId);
+            Debug.Log($"Removed character: {name} (ID: {characterId}) from the team roster");
             return true;
         }
         
-        Debug.LogWarning($"Failed to remove character. Index {index} is out of range");
+        Debug.LogWarning($"Failed to remove character. ID {characterId} not found");
         return false;
     }
 }
