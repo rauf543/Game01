@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[Serializable]
 public class CharacterData {
+    public string characterId;  // Unique ID for the character
     public string CharacterName;
     public int CurrentLevel;
     public int CurrentXP;
