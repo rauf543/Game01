@@ -1,169 +1,92 @@
-# Task Instructions for AI Agent: CS-NET-01 - Basic Backend Setup & API Stub  ## Overview This task involves creating a minimal backend service using Node.js and Express with a SQLite database connection. You must implement stub API endpoints for user login, retrieving a player roster, and saving player character data. Your solution should strictly adhere to the following specifications without adding any extra functionality or unnecessary complexity.  ## Requirements  ### Tech Stack - **Primary Framework:** Node.js with Express   - **Database:** SQLite (file-based) using a Node.js library such as `sqlite3` - **Logging:** Use `console.log()` for basic logging of incoming requests, errors, and key actions. - **Error Handling:** Use minimal `try...catch` blocks; every endpoint must return a JSON object with a consistent structure.  ### API Endpoints  #### 1. User Login (POST `/api/auth/login`) - **Request Payload:**     ```json   {"username": "string", "password": "string"} 
+Task Instructions: UI-01-Refactor - Handle Async Loading
+Overview
+We need to implement simple, clear, and strictly scoped asynchronous loading indicators in our Unity-based UI. The aim is to ensure the user sees a "Loading..." or spinner when network calls are in progress, and that clickable UI elements are disabled to prevent unwanted user actions.
 
-Response Payload (Success):
+Primary Objectives
+Login Screen (UI-AUTH-01)  
 
+When NetworkManager.Login() is called, display a loading indicator or text message such as "Logging in..." (or similar) while the call is in progress.
 
+Disable the "Login" button and any other relevant UI elements that should not be clicked while logging in.
 
-json
-Copy
+If the call fails, hide the loading indicator and show a simple error message such as "Login Failed. Please check your connection."
 
-{"success": true, "message": "Login successful", "userId": "some_unique_user_id"} 
+Ensure the login button is re-enabled if the user can retry.
 
-Response Payload (Failure):
+Guild Hall (UI-03-Refactor related, referencing CS-04-Refactor)  
 
+When fetching the player roster via TeamRosterManager (for example, WorkspaceRosterAsync()), display a loading indicator or spinner.
 
+Disable relevant Guild Hall buttons (e.g., navigation or character selection buttons) while loading.
 
-json
-Copy
+If the data fetch fails, hide the loading indicator and display an error message. Keep interactive elements disabled until the user performs a retry or navigates away.
 
-{"success": false, "message": "Invalid credentials"} 
+Requirements
+Loading Indicator Implementation  
 
-Note:
+Simple text label or a basic rotating spinner icon.  
 
-Do not implement full authentication logic; use hardcoded or simple value checks for stub behavior.
+Must appear only while async operations are in progress.  
 
-2. Get Player Roster/Data (GET /api/player/roster)
-Authentication:
+The style/design can be minimal; no fancy progress bars needed.
 
-Assume an authenticated user (authentication mechanism can be simulated via a header or session; full implementation is not required).
+UI Interaction Lock/Disable  
 
-Response Payload (Success):
+While loading, disable critical buttons and inputs (e.g., login button, navigation buttons in Guild Hall).  
 
+Re-enable those elements once loading completes or fails, as appropriate.
 
+Error Handling UI  
 
-json
-Copy
+On async operation failure, hide loading indicators and present an error message.  
 
-{   "success": true,   "roster": [     {"characterId": "char1", "level": 1, "xp": 0, "maxHp": 100, "maxEnergy": 50},     {"characterId": "char2", ...}   ] } 
+Keep it simple: A TextMeshPro label or a basic panel with a short message.  
 
-Return an empty array if no characters exist.
+If applicable, re-enable or keep disabled certain UI elements until the user takes a valid action (like “Retry” or close the error message).
 
-Response Payload (Failure):
+Scope and Limitations  
 
+Focus only on the Login screen and Guild Hall’s initial roster load.  
 
+Do not implement or refactor anything outside these areas.  
 
-json
-Copy
+Do not add extra features not requested (e.g., no advanced caching or rewriting unrelated UI scripts).  
 
-{"success": false, "message": "Error fetching roster"} 
+Keep the code additions minimal and relevant.
 
-3. Save Player Roster/Data (POST or PUT /api/player/character or /api/player/character/{characterId})
-Request Payload:
+Code Structure and Patterns  
 
+Maintain existing project folder structure and naming conventions.  
 
+If new scripts or UI elements are needed, place them logically (e.g., Scripts/UI/LoadingIndicators, or inside existing UI script files if it’s minimal).  
 
-json
-Copy
+Keep code changes restricted to only what’s necessary for handling async operations and showing/hiding loading states.
 
-{"characterId": "char1", "level": 2, "xp": 150, "maxHp": 110, "maxEnergy": 55} 
+Testing  
 
-Response Payload (Success):
+Perform manual tests:  
 
+Login sequence: Confirm “Loading…”/spinner appears, the button is disabled, success re-enables the button, failure shows an error message.  
 
+Guild Hall roster load: Confirm “Loading…”/spinner appears, navigation/selection buttons are disabled, and success re-enables them.  
 
-json
-Copy
+No automated tests are required at this time.
 
-{"success": true, "message": "Character saved", "character": {updated_character_data}} 
+Definition of Done  
 
-Response Payload (Failure):
+The code compiles and runs in the Unity Editor without errors.  
 
+Logging into the game shows a loading state, then transitions to the game on success, or displays an error on failure.  
 
+Entering the Guild Hall fetches and displays the roster with a loading state, and an error message on failure.  
 
-json
-Copy
+No extraneous or unrelated changes are made to the codebase.
 
-{"success": false, "message": "Error saving character"} 
+Important Notes
+This task is time-bound to Sprint 1.5. Only implement exactly what is specified.  
 
-Note:
+Do not add new, unrelated features or large-scale refactors.  
 
-For the stub, simply log the received data and return a success response without complex validation or storage logic.
+The user experience must remain smooth, with minimal text/spinner usage.  
 
-Database Connection
-Setup:
-
-Establish a basic SQLite connection.
-
-Do not design a complex schema; only include the minimal code required to demonstrate connectivity.
-
-Documentation
-README.md:
-
-Create a simple README in the backend project directory.
-
-Document each endpoint’s path, expected request payload, and sample responses.
-
-Do not include any additional documentation or extra features beyond what is specified.
-
-What to Do
-Project Initialization:
-
-Set up a Node.js project using npm init.
-
-Install required dependencies such as Express and sqlite3.
-
-API Implementation:
-
-Implement the following endpoints exactly as specified:
-
-POST /api/auth/login
-
-GET /api/player/roster
-
-POST/PUT /api/player/character (choose one method consistently)
-
-Ensure each endpoint returns the precise JSON structure detailed above.
-
-Database Integration:
-
-Configure a simple SQLite connection for local development.
-
-Only implement the minimal functionality needed to support the stub endpoints.
-
-Logging & Error Handling:
-
-Add basic logging (console.log()) for each incoming request and error.
-
-Use simple try...catch blocks to catch errors and respond with the specified JSON error messages.
-
-Documentation:
-
-Create a README.md file that documents:
-
-A brief project overview.
-
-All API endpoints with sample requests/responses.
-
-Do not include any extra documentation or details not required.
-
-What NOT to Do
-Avoid Unnecessary Tasks:
-
-Do not implement any features or endpoints that are not explicitly specified.
-
-Do not add extra middleware, libraries, or abstractions beyond the minimal requirements.
-
-Avoid Code Bloat:
-
-Do not introduce extra logging, error handling, or complex architectural patterns.
-
-Do not over-engineer or add any extra functionality like full authentication, token management, or additional endpoints.
-
-Stick to the Spec:
-
-Do not modify endpoint paths, payload structures, or response formats.
-
-Do not implement any changes that deviate from the given instructions.
-
-Final Deliverable
-At the end of the task, before submission, provide a comprehensive summary that includes:
-
-An overview of all changes made.
-
-A list of modified or added files.
-
-Relevant code snippets highlighting key changes.
-
-A clear explanation of how each requirement was met.
-
-This summary is critical for the code review process and must be included as the final output.
+After implementing, you must provide a concise but thorough summary of all changes made, including filenames and brief rationale for each change. This summary is required for our code review process.
