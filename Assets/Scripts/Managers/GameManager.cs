@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TeamRosterManager teamRosterManager;
     public TeamRosterManager TeamRoster => teamRosterManager;
 
+    // NetworkManager prefab reference removed, using Resources.Load now
+
     // Flag to track if player is currently in a mission
     private bool _isInMission = false;
     public bool IsInMission 
@@ -55,6 +57,24 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void InitializeComponents()
     {
+        // Ensure NetworkManager singleton instance exists by loading and instantiating the prefab if needed
+        if (NetworkManager.Instance == null)
+        {
+            // Load the prefab from "Assets/Resources/Prefabs/NetworkManager.prefab"
+            GameObject networkManagerPrefab = Resources.Load<GameObject>("Prefabs/NetworkManager");
+            if (networkManagerPrefab != null)
+            {
+                // Instantiate the prefab. The NetworkManager's Awake method will handle setting the instance and DontDestroyOnLoad.
+                Instantiate(networkManagerPrefab);
+                Debug.Log("NetworkManager prefab instantiated.");
+            }
+            else
+            {
+                Debug.LogError("Failed to load NetworkManager prefab from Resources/Prefabs/Managers. Ensure the prefab exists at the correct path.");
+            }
+        }
+        // NetworkManager.Instance should now be available for other managers
+
         // Find TeamRosterManager if not already assigned
         if (teamRosterManager == null)
         {
@@ -70,6 +90,7 @@ public class GameManager : MonoBehaviour
                 {
                     GameObject teamRosterObj = new GameObject("TeamRosterManager");
                     teamRosterObj.transform.SetParent(transform);
+                    // TeamRosterManager's Awake will now correctly find the initialized NetworkManager
                     teamRosterManager = teamRosterObj.AddComponent<TeamRosterManager>();
                 }
             }
