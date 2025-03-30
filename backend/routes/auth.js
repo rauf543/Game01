@@ -60,12 +60,14 @@ router.post('/register', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
   console.log('Login request received');
+  console.log('Request body:', req.body); // Log the request body for debugging
   
   try {
     const { username, password } = req.body;
     
     // Validate request payload
     if (!username || !password) {
+      console.log('Missing credentials. Username or password not provided.');
       return res.status(400).json({
         success: false,
         message: "Username and password are required"
