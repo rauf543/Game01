@@ -49,6 +49,7 @@ async function initializeDatabase() {
         XP INTEGER DEFAULT 0,
         MaxHP INTEGER DEFAULT 100,
         MaxEnergy INTEGER DEFAULT 50,
+        Name TEXT,
         FOREIGN KEY (OwnerUserID) REFERENCES Users(UserID)
       )
     `);
@@ -140,17 +141,17 @@ async function insertSampleUsers() {
 function insertSampleCharacters() {
   return new Promise((resolve, reject) => {
     const characters = [
-      { CharacterID: 'char1', OwnerUserID: 'user1', Level: 1, XP: 0, MaxHP: 100, MaxEnergy: 50 },
-      { CharacterID: 'char2', OwnerUserID: 'user1', Level: 2, XP: 150, MaxHP: 120, MaxEnergy: 60 },
-      { CharacterID: 'char3', OwnerUserID: 'user2', Level: 3, XP: 350, MaxHP: 150, MaxEnergy: 75 }
+      { CharacterID: 'char1', OwnerUserID: 'user1', Level: 1, XP: 0, MaxHP: 100, MaxEnergy: 50, Name: 'Warrior' },
+      { CharacterID: 'char2', OwnerUserID: 'user1', Level: 2, XP: 150, MaxHP: 120, MaxEnergy: 60, Name: 'Mage' },
+      { CharacterID: 'char3', OwnerUserID: 'user2', Level: 3, XP: 350, MaxHP: 150, MaxEnergy: 75, Name: 'Rogue' }
     ];
     
     // Use Promise.all to handle all insertions
     const insertPromises = characters.map(char => {
       return new Promise((resolve, reject) => {
         db.run(
-          'INSERT INTO Characters (CharacterID, OwnerUserID, Level, XP, MaxHP, MaxEnergy) VALUES (?, ?, ?, ?, ?, ?)',
-          [char.CharacterID, char.OwnerUserID, char.Level, char.XP, char.MaxHP, char.MaxEnergy],
+          'INSERT INTO Characters (CharacterID, OwnerUserID, Level, XP, MaxHP, MaxEnergy, Name) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [char.CharacterID, char.OwnerUserID, char.Level, char.XP, char.MaxHP, char.MaxEnergy, char.Name],
           function(err) {
             if (err) {
               console.error('Error inserting sample character:', err.message);
@@ -336,22 +337,54 @@ const userDb = {
 
 // Character-related database operations
 const characterDb = {
-  // CREATE - Create a new character
-  createCharacter(characterData) {
+  // CREATE - Create a new character with validation
+  createCharacter(characterData, ownerUserId) {
     return new Promise((resolve, reject) => {
-      // Generate a CharacterID if not provided
-      const CharacterID = characterData.CharacterID || 'char_' + Date.now();
+      // Validate inputs
+      if (!ownerUserId) {
+        reject(new Error('Owner user ID is required'));
+        return;
+      }
+      
+      if (characterData.level !== 1) {
+        reject(new Error('New characters must have exactly level 1'));
+        return;
+      }
+      
+      if (characterData.xp !== 0) {
+        reject(new Error('New characters must have exactly 0 XP'));
+        return;
+      }
+      
+      if (!characterData.maxHp || characterData.maxHp <= 0) {
+        reject(new Error('MaxHP must be greater than 0'));
+        return;
+      }
+      
+      if (!characterData.maxEnergy || characterData.maxEnergy <= 0) {
+        reject(new Error('MaxEnergy must be greater than 0'));
+        return;
+      }
+      
+      if (!characterData.name || characterData.name.trim() === '') {
+        reject(new Error('Character name is required'));
+        return;
+      }
+      
+      // Generate a unique CharacterID
+      const CharacterID = 'char_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
       
       // Insert the new character
       db.run(
-        'INSERT INTO Characters (CharacterID, OwnerUserID, Level, XP, MaxHP, MaxEnergy) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO Characters (CharacterID, OwnerUserID, Level, XP, MaxHP, MaxEnergy, Name) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [
           CharacterID,
-          characterData.OwnerUserID,
-          characterData.Level || 1,
-          characterData.XP || 0,
-          characterData.MaxHP || 100,
-          characterData.MaxEnergy || 50
+          ownerUserId,
+          characterData.level,
+          characterData.xp,
+          characterData.maxHp,
+          characterData.maxEnergy,
+          characterData.name
         ],
         function(err) {
           if (err) {
@@ -368,20 +401,29 @@ const characterDb = {
     });
   },
   
-  // READ - Get all characters for a user
-  getCharactersByOwnerUserID(OwnerUserID) {
+  // READ - Get all characters for a user (roster)
+  getCharactersByUserId(ownerUserId) {
     return new Promise((resolve, reject) => {
-      db.all('SELECT * FROM Characters WHERE OwnerUserID = ?', [OwnerUserID], (err, rows) => {
-        if (err) {
-          reject(err);
-          return;
+      db.all(
+        'SELECT CharacterID, OwnerUserID, Level, XP, MaxHP, MaxEnergy, Name FROM Characters WHERE OwnerUserID = ?',
+        [ownerUserId],
+        (err, rows) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(rows || []);
         }
-        resolve(rows || []);
-      });
+      );
     });
   },
   
-  // READ - Get a specific character by ID
+  // READ - Get all characters for a user (keeping this for backward compatibility)
+  getCharactersByOwnerUserID(OwnerUserID) {
+    return this.getCharactersByUserId(OwnerUserID);
+  },
+  
+  // READ - Get a specific character by ID (keeping this existing function)
   getCharacterByID(CharacterID) {
     return new Promise((resolve, reject) => {
       db.get('SELECT * FROM Characters WHERE CharacterID = ?', [CharacterID], (err, row) => {
@@ -394,43 +436,64 @@ const characterDb = {
     });
   },
   
-  // UPDATE - Update a character
-  updateCharacter(CharacterID, updateData) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Get the current character data
-        const currentCharacter = await this.getCharacterByID(CharacterID);
-        
-        if (!currentCharacter) {
-          reject(new Error('Character not found'));
-          return;
-        }
-        
-        // Prepare update variables, using current values as defaults
-        const Level = updateData.Level !== undefined ? updateData.Level : currentCharacter.Level;
-        const XP = updateData.XP !== undefined ? updateData.XP : currentCharacter.XP;
-        const MaxHP = updateData.MaxHP !== undefined ? updateData.MaxHP : currentCharacter.MaxHP;
-        const MaxEnergy = updateData.MaxEnergy !== undefined ? updateData.MaxEnergy : currentCharacter.MaxEnergy;
-        
-        // Update the character
-        db.run(
-          'UPDATE Characters SET Level = ?, XP = ?, MaxHP = ?, MaxEnergy = ? WHERE CharacterID = ?',
-          [Level, XP, MaxHP, MaxEnergy, CharacterID],
-          function(err) {
-            if (err) {
-              reject(err);
-              return;
-            }
-            
-            // Get the updated character data
-            characterDb.getCharacterByID(CharacterID)
-              .then(updated => resolve(updated))
-              .catch(err => reject(err));
-          }
-        );
-      } catch (error) {
-        reject(error);
+  // UPDATE - Update a character with validation and ownership check
+  updateCharacter(characterId, characterData, ownerUserId) {
+    return new Promise((resolve, reject) => {
+      // Validate inputs
+      if (!characterId || !ownerUserId) {
+        reject(new Error('Character ID and owner user ID are required'));
+        return;
       }
+      
+      if (characterData.level === undefined || characterData.level < 1) {
+        reject(new Error('Level must be greater than or equal to 1'));
+        return;
+      }
+      
+      if (characterData.xp === undefined || characterData.xp < 0) {
+        reject(new Error('XP must be greater than or equal to 0'));
+        return;
+      }
+      
+      if (characterData.maxHp === undefined || characterData.maxHp <= 0) {
+        reject(new Error('MaxHP must be greater than 0'));
+        return;
+      }
+      
+      if (characterData.maxEnergy === undefined || characterData.maxEnergy <= 0) {
+        reject(new Error('MaxEnergy must be greater than 0'));
+        return;
+      }
+      
+      // Update the character, checking both CharacterID and OwnerUserID
+      db.run(
+        'UPDATE Characters SET Level = ?, XP = ?, MaxHP = ?, MaxEnergy = ? WHERE CharacterID = ? AND OwnerUserID = ?',
+        [
+          characterData.level,
+          characterData.xp,
+          characterData.maxHp,
+          characterData.maxEnergy,
+          characterId,
+          ownerUserId
+        ],
+        function(err) {
+          if (err) {
+            reject(err);
+            return;
+          }
+          
+          // Check if the update affected exactly one row
+          if (this.changes !== 1) {
+            resolve(null); // Character not found or not owned by user
+            return;
+          }
+          
+          // Get the updated character data
+          characterDb.getCharacterByID(characterId)
+            .then(updated => resolve(updated))
+            .catch(err => reject(err));
+        }
+      );
     });
   },
   
