@@ -12,22 +12,49 @@ public class TeamRosterManager : MonoBehaviour
     // Dictionary to store all characters in the player's roster using characterId as key
     private Dictionary<string, CharacterData> teamRoster = new Dictionary<string, CharacterData>();
     
-    [SerializeField] private NetworkManager networkManager;
+    // NetworkManager reference obtained from GameManager
+    private NetworkManager networkManager;
 
     // Public property to access the team roster
     public IReadOnlyCollection<CharacterData> TeamRoster => teamRoster.Values;
+    
+    // Events for loading state changes
+    public event Action OnRosterLoadingStarted;
+    public event Action<bool, string> OnRosterLoadingFinished; // bool: success, string: error message if any
+    
+    // Loading state flag
+    private bool isLoadingRoster = false;
+    public bool IsLoadingRoster => isLoadingRoster;
+
+    private void Awake()
+    {
+        // Get NetworkManager reference directly from its singleton instance
+        networkManager = NetworkManager.Instance;
+        if (networkManager == null)
+        {
+            // This might happen if TeamRosterManager's Awake runs before NetworkManager's Awake.
+            // Consider using Start() or ensuring script execution order if this becomes an issue.
+            Debug.LogError("NetworkManager.Instance is null in TeamRosterManager.Awake. Check script execution order or initialization timing.");
+        }
+    }
 
     private void Start()
     {
-        // Fetch roster from server on startup
-        FetchRoster();
+        // Fetch roster from server on startup if NetworkManager is available
+        // FetchRosterAsync(); // Removed: Roster should be fetched explicitly when needed (e.g., entering Guild Hall)
     }
 
     /// <summary>
-    /// Fetches the player's roster from the server
+    /// Fetches the player's roster from the server asynchronously
     /// </summary>
-    private void FetchRoster()
+    public void FetchRosterAsync()
     {
+        if (isLoadingRoster || networkManager == null)
+            return;
+            
+        isLoadingRoster = true;
+        OnRosterLoadingStarted?.Invoke();
+        
         StartCoroutine(networkManager.WorkspaceRoster(OnRosterFetched));
     }
 
@@ -37,9 +64,12 @@ public class TeamRosterManager : MonoBehaviour
     /// <param name="characters">List of character data fetched from the server</param>
     private void OnRosterFetched(List<CharacterData> characters)
     {
+        isLoadingRoster = false;
+        
         if (characters == null)
         {
             Debug.LogError("Failed to fetch character roster from server");
+            OnRosterLoadingFinished?.Invoke(false, "Failed to fetch team roster. Please check your connection.");
             return;
         }
 
@@ -58,6 +88,9 @@ public class TeamRosterManager : MonoBehaviour
                 Debug.LogWarning($"Character {character.CharacterName} has no ID and was not added to roster");
             }
         }
+        
+        // Notify that loading has finished successfully
+        OnRosterLoadingFinished?.Invoke(true, string.Empty);
     }
 
     /// <summary>
