@@ -6,14 +6,55 @@ using UnityEngine.Networking;
 
 public class NetworkManager : MonoBehaviour
 {
+    // Singleton instance
+    private static NetworkManager _instance;
+    public static NetworkManager Instance
+    {
+        get
+        {
+            // Logic to handle instance creation if needed, though typically initialized by GameInitializer
+            if (_instance == null)
+            {
+                Debug.LogError("NetworkManager instance is null. Ensure it's initialized properly, likely via GameInitializer loading the prefab.");
+            }
+            return _instance;
+        }
+    }
+
+    // BackendConfig should be assigned in the prefab Inspector
     [SerializeField] private BackendConfig backendConfig;
+
+    // Store the authenticated user ID after successful login
+    private string authenticatedUserId;
+
+    private void Awake()
+    {
+        // Singleton pattern: Ensure only one instance exists
+        if (_instance == null)
+        {
+            _instance = this;
+            DontDestroyOnLoad(gameObject); // Make this instance persistent across scenes
+
+            // Optional: Validate BackendConfig assignment
+            if (backendConfig == null)
+            {
+                 Debug.LogError("BackendConfig is not assigned to the NetworkManager prefab in the Inspector!");
+            }
+        }
+        else if (_instance != this)
+        {
+            // If another instance already exists, destroy this one
+            Debug.LogWarning("Duplicate NetworkManager instance found. Destroying the new one.");
+            Destroy(gameObject);
+        }
+    }
 
     // Login response structure
     [Serializable]
     private class LoginResponse
     {
         public bool success;
-        public string userId;
+        public string UserID; // Changed field name to match backend JSON key
     }
 
     // Login result structure
@@ -31,6 +72,8 @@ public class NetworkManager : MonoBehaviour
         public List<CharacterData> characters;
     }
 
+    // SetBackendConfig removed as config is now set via prefab
+
     /// <summary>
     /// Login to the backend service
     /// </summary>
@@ -44,7 +87,9 @@ public class NetworkManager : MonoBehaviour
         form.AddField("username", username);
         form.AddField("password", password);
 
-        string url = $"{backendConfig.baseUrl}/login";
+        // Ensure trailing slash on baseUrl if not present, then append path
+        string baseUrl = backendConfig.baseUrl.EndsWith("/") ? backendConfig.baseUrl : backendConfig.baseUrl + "/";
+        string url = $"{baseUrl}api/auth/login";
         
         using (UnityWebRequest request = UnityWebRequest.Post(url, form))
         {
@@ -64,7 +109,14 @@ public class NetworkManager : MonoBehaviour
                 {
                     LoginResponse response = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
                     result.success = response.success;
-                    result.userId = response.userId;
+                    result.userId = response.UserID; // Use the corrected field name
+
+                    // Store the user ID if login was successful
+                    if (result.success && !string.IsNullOrEmpty(result.userId))
+                    {
+                        authenticatedUserId = result.userId;
+                        Debug.Log($"[NetworkManager] Login Success: Stored authenticatedUserId = {authenticatedUserId}"); // DEBUG LOG
+                    }
                 }
                 catch (Exception e)
                 {
@@ -84,10 +136,25 @@ public class NetworkManager : MonoBehaviour
     /// <returns>Coroutine that returns a List of CharacterData or null on failure</returns>
     public IEnumerator WorkspaceRoster(Action<List<CharacterData>> callback)
     {
-        string url = $"{backendConfig.baseUrl}/workspace_roster";
+        // Ensure trailing slash on baseUrl if not present, then append path
+        string baseUrl = backendConfig.baseUrl.EndsWith("/") ? backendConfig.baseUrl : backendConfig.baseUrl + "/";
+        string url = $"{baseUrl}api/player/roster"; // Corrected endpoint path
         
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
+            // Add authentication header if user is logged in
+            Debug.Log($"[NetworkManager] WorkspaceRoster: Checking authenticatedUserId = {authenticatedUserId}"); // DEBUG LOG
+            if (!string.IsNullOrEmpty(authenticatedUserId))
+            {
+                Debug.Log($"[NetworkManager] WorkspaceRoster: Setting X-User-ID header to {authenticatedUserId}"); // DEBUG LOG
+                request.SetRequestHeader("X-User-ID", authenticatedUserId);
+            }
+            else
+            {
+                Debug.LogWarning("WorkspaceRoster called but no user is authenticated. Request might fail.");
+                // Optionally, you could prevent the request here or handle the unauthenticated state
+            }
+
             yield return request.SendWebRequest();
 
             if (request.result != UnityWebRequest.Result.Success)
@@ -120,7 +187,9 @@ public class NetworkManager : MonoBehaviour
     /// <returns>Coroutine that returns true on success, false on failure</returns>
     public IEnumerator SaveCharacterData(CharacterData characterData, Action<bool> callback)
     {
-        string url = $"{backendConfig.baseUrl}/save_character_data";
+        // Ensure trailing slash on baseUrl if not present, then append path
+        string baseUrl = backendConfig.baseUrl.EndsWith("/") ? backendConfig.baseUrl : backendConfig.baseUrl + "/";
+        string url = $"{baseUrl}api/player/save_character_data";
         
         // Convert CharacterData to JSON
         string jsonData = JsonUtility.ToJson(characterData);

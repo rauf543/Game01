@@ -18,8 +18,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware to parse JSON requests
+// Middleware to parse JSON and URL-encoded form data
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Register routes
 app.use('/api/auth', authRoutes);
