@@ -1,60 +1,21 @@
 using UnityEngine;
 using System; // Required for System.Action
+using Game01.Data; // For CharacterData
+using System.Collections.Generic;
+using System.Linq; // For LINQ operations
 
-// Placeholder for CharacterData structure - Assume it exists elsewhere
-public class CharacterData
+// Extension method for LevelXPData_SO to add the GetXPRequired functionality
+public static class LevelXPData_SOExtensions
 {
-    public string CharacterID; // Assuming an ID for logging
-    public int CurrentLevel;
-    public int CurrentXP;
-    public int MaxHP;
-    public int MaxEnergy;
-    // Other character properties...
-}
-
-// Placeholder for LevelXPData_SO structure - Assume it exists elsewhere
-public class LevelXPData_SO : ScriptableObject
-{
-    // Assuming a method or data structure to get XP required for a level.
-    // Returns -1 or throws an exception if level is invalid/max level exceeded.
-    public int GetXPRequired(int level)
+    public static int GetXPRequired(this LevelXPData_SO levelData, int level)
     {
-        // Example implementation: Replace with actual logic
-        if (level <= 0) return 0;
-        if (level > 50) return -1; // Example max level
-        return level * 100; // Simple formula for demonstration
+        if (levelData == null || levelData.LevelRequirements == null)
+            return -1;
+            
+        var levelReq = levelData.LevelRequirements.FirstOrDefault(req => req.Level == level);
+        return levelReq != null ? levelReq.XPRequired : -1;
     }
 }
-
-// Placeholder for TeamRosterManager - Assume it exists elsewhere
-public class TeamRosterManager : MonoBehaviour
-{
-    public static TeamRosterManager Instance { get; private set; }
-
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            // DontDestroyOnLoad(gameObject); // Only if needed
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    // Assume this method exists and handles saving data, then calls the callback.
-    public void SaveCharacterData(CharacterData character, Action<bool, CharacterData> onComplete)
-    {
-        Debug.Log($"Attempting to save data for Character ID: {character.CharacterID}");
-        // Simulate async save operation
-        // In a real scenario, this would involve network calls etc.
-        bool success = UnityEngine.Random.value > 0.1f; // Simulate 90% success rate
-        onComplete?.Invoke(success, character);
-    }
-}
-
 
 namespace Game.Systems // Assuming a namespace, adjust if needed
 {
@@ -100,12 +61,12 @@ namespace Game.Systems // Assuming a namespace, adjust if needed
             }
             if (xpAmount <= 0)
             {
-                Debug.LogWarning($"ProgressionSystem: Attempted to grant non-positive XP ({xpAmount}) to character {character.CharacterID}. Ignoring.");
+                Debug.LogWarning($"ProgressionSystem: Attempted to grant non-positive XP ({xpAmount}) to character {character.characterId}. Ignoring.");
                 return;
             }
+character.CurrentXP += xpAmount;
+Debug.Log($"Character {character.characterId} granted {xpAmount} XP. Current XP: {character.CurrentXP}");
 
-            character.CurrentXP += xpAmount;
-            Debug.Log($"Character {character.CharacterID} granted {xpAmount} XP. Current XP: {character.CurrentXP}");
 
             CheckLevelUp(character);
         }
@@ -140,7 +101,7 @@ namespace Game.Systems // Assuming a namespace, adjust if needed
                 // Check if max level reached or invalid level data
                 if (xpRequiredForNextLevel <= 0)
                 {
-                    // Debug.Log($"Character {character.CharacterID} has reached max level or level data is invalid for level {nextLevel}.");
+                    // Debug.Log($"Character {character.characterId} has reached max level or level data is invalid for level {nextLevel}.");
                     break; // Exit loop if max level or no data for next level
                 }
 
@@ -157,7 +118,7 @@ namespace Game.Systems // Assuming a namespace, adjust if needed
                     character.MaxEnergy += 5;
                     // --- End Stat Calculation ---
 
-                    Debug.Log($"Character {character.CharacterID} leveled up to Level {character.CurrentLevel}! New Stats - MaxHP: {character.MaxHP}, MaxEnergy: {character.MaxEnergy}. Overflow XP: {character.CurrentXP}");
+                    Debug.Log($"Character {character.characterId} leveled up to Level {character.CurrentLevel}! New Stats - MaxHP: {character.MaxHP}, MaxEnergy: {character.MaxEnergy}. Overflow XP: {character.CurrentXP}");
                     leveledUpThisCheck = true; // Mark that a level up occurred in this check cycle
                 }
                 else
@@ -170,8 +131,19 @@ namespace Game.Systems // Assuming a namespace, adjust if needed
             // If any level up occurred during this check, save the updated character data.
             if (leveledUpThisCheck)
             {
-                Debug.Log($"Initiating save for Character {character.CharacterID} after level up(s).");
-                TeamRosterManager.Instance.SaveCharacterData(character, OnSaveComplete);
+                Debug.Log($"Initiating save for Character {character.characterId} after level up(s).");
+                // Use the TeamRosterManager directly without callback
+                TeamRosterManager teamRoster = FindObjectOfType<TeamRosterManager>();
+                if (teamRoster != null)
+                {
+                    teamRoster.AddCharacter(character);
+                    OnSaveComplete(true, character);
+                }
+                else
+                {
+                    Debug.LogError("TeamRosterManager not found in scene. Character data not saved.");
+                    OnSaveComplete(false, character);
+                }
             }
         }
 
@@ -184,14 +156,14 @@ namespace Game.Systems // Assuming a namespace, adjust if needed
         {
             if (success)
             {
-                Debug.Log($"Character {savedCharacter.CharacterID} data saved successfully after level up. Raising OnCharacterLevelUp event.");
+                Debug.Log($"Character {savedCharacter.characterId} data saved successfully after level up. Raising OnCharacterLevelUp event.");
                 // Invoke the event only on successful save
                 OnCharacterLevelUp?.Invoke(savedCharacter);
             }
             else
             {
                 // Log an error if the save failed. Do not raise the event.
-                Debug.LogError($"ProgressionSystem: Failed to save character data for Character ID: {savedCharacter?.CharacterID} after level up attempt.");
+                Debug.LogError($"ProgressionSystem: Failed to save character data for Character ID: {savedCharacter?.characterId} after level up attempt.");
             }
         }
     }

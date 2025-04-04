@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using Game01.Data;
 
 public class CharacterDisplay : MonoBehaviour
 {

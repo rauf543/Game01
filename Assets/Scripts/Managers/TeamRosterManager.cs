@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Game01.Data;
 
 /// <summary>
 /// TeamRosterManager manages the player's team of characters.
