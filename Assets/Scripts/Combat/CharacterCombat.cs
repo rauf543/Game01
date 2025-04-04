@@ -1,7 +1,7 @@
 // Assets/Scripts/Combat/CharacterCombat.cs
 using UnityEngine;
 using System.Collections.Generic;
-using Game01.Data; // Assuming CharacterData is here
+using Game01.Data; // For CharacterData
 using Game01.Combat.Data; // For ActiveStatusEffect
 using Game01.Combat; // For StatusEffectType
 
@@ -24,9 +24,9 @@ namespace Game01.Combat
         {
             if (persistentData != null)
             {
-                // Assuming CharacterData has a MaxHealth field
-                MaxHP = persistentData.MaxHealth;
-                CurrentHP = persistentData.MaxHealth;
+                // Use the MaxHP field from CharacterData
+                MaxHP = persistentData.MaxHP;
+                CurrentHP = persistentData.MaxHP;
             }
             else
             {

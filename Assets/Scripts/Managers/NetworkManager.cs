@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using Game01.Data;
 
 public class NetworkManager : MonoBehaviour
 {

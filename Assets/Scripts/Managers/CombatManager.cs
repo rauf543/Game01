@@ -1,7 +1,7 @@
 // Assets/Scripts/Managers/CombatManager.cs
 using System.Collections.Generic;
 using UnityEngine;
-using Game01.Data; // Assuming CharacterData is here
+using Game01.Data; // For CharacterData
 using Game01.Combat; // For CharacterCombat, CombatActions, StatusEffectType
 // using Game01.ScriptableObjects; // Assuming EnemyData_SO might be here
 // using Game01.Cards; // Assuming CardEffectData might be here
