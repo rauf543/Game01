@@ -18,9 +18,9 @@ public class CharacterDisplay : MonoBehaviour
         
         // Update UI
         if (characterNameText != null)
-            characterNameText.text = currentData.CharacterName;
+            characterNameText.text = currentData.name;
         
         if (characterLevelText != null)
-            characterLevelText.text = "Level: " + currentData.CurrentLevel.ToString();
+            characterLevelText.text = "Level: " + currentData.level.ToString();
     }
 }

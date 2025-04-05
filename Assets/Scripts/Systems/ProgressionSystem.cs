@@ -64,8 +64,8 @@ namespace Game.Systems // Assuming a namespace, adjust if needed
                 Debug.LogWarning($"ProgressionSystem: Attempted to grant non-positive XP ({xpAmount}) to character {character.characterId}. Ignoring.");
                 return;
             }
-character.CurrentXP += xpAmount;
-Debug.Log($"Character {character.characterId} granted {xpAmount} XP. Current XP: {character.CurrentXP}");
+character.xp += xpAmount;
+Debug.Log($"Character {character.characterId} granted {xpAmount} XP. Current XP: {character.xp}");
 
 
             CheckLevelUp(character);
@@ -95,7 +95,7 @@ Debug.Log($"Character {character.characterId} granted {xpAmount} XP. Current XP:
             // Loop to handle multiple level ups from a single XP grant
             while (true)
             {
-                int nextLevel = character.CurrentLevel + 1;
+                int nextLevel = character.level + 1;
                 int xpRequiredForNextLevel = levelXPData.GetXPRequired(nextLevel);
 
                 // Check if max level reached or invalid level data
@@ -105,20 +105,20 @@ Debug.Log($"Character {character.characterId} granted {xpAmount} XP. Current XP:
                     break; // Exit loop if max level or no data for next level
                 }
 
-                if (character.CurrentXP >= xpRequiredForNextLevel)
+                if (character.xp >= xpRequiredForNextLevel)
                 {
                     // Level Up!
-                    int xpOverflow = character.CurrentXP - xpRequiredForNextLevel;
-                    character.CurrentLevel++;
-                    character.CurrentXP = xpOverflow;
+                    int xpOverflow = character.xp - xpRequiredForNextLevel;
+                    character.level++;
+                    character.xp = xpOverflow;
 
                     // --- Stat Calculation ---
-                    // Simple formula: +10 MaxHP, +5 MaxEnergy per level gained.
-                    character.MaxHP += 10;
-                    character.MaxEnergy += 5;
+                    // Simple formula: +10 maxHp, +5 maxEnergy per level gained.
+                    character.maxHp += 10;
+                    character.maxEnergy += 5;
                     // --- End Stat Calculation ---
 
-                    Debug.Log($"Character {character.characterId} leveled up to Level {character.CurrentLevel}! New Stats - MaxHP: {character.MaxHP}, MaxEnergy: {character.MaxEnergy}. Overflow XP: {character.CurrentXP}");
+                    Debug.Log($"Character {character.characterId} leveled up to Level {character.level}! New Stats - MaxHP: {character.maxHp}, MaxEnergy: {character.maxEnergy}. Overflow XP: {character.xp}");
                     leveledUpThisCheck = true; // Mark that a level up occurred in this check cycle
                 }
                 else
@@ -136,8 +136,7 @@ Debug.Log($"Character {character.characterId} granted {xpAmount} XP. Current XP:
                 TeamRosterManager teamRoster = FindObjectOfType<TeamRosterManager>();
                 if (teamRoster != null)
                 {
-                    teamRoster.AddCharacter(character);
-                    OnSaveComplete(true, character);
+                    teamRoster.AddCharacter(character, (success, message) => OnSaveComplete(success, character));
                 }
                 else
                 {

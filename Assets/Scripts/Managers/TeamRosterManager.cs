@@ -82,11 +82,11 @@ public class TeamRosterManager : MonoBehaviour
             if (!string.IsNullOrEmpty(character.characterId))
             {
                 teamRoster[character.characterId] = character;
-                Debug.Log($"Added character: {character.CharacterName} (ID: {character.characterId}) to the team roster");
+                Debug.Log($"Added character: {character.name} (ID: {character.characterId}) to the team roster");
             }
             else
             {
-                Debug.LogWarning($"Character {character.CharacterName} has no ID and was not added to roster");
+                Debug.LogWarning($"Character {character.name} has no ID and was not added to roster");
             }
         }
         
@@ -119,7 +119,7 @@ public class TeamRosterManager : MonoBehaviour
 
         // Add to local dictionary (or update if exists)
         teamRoster[character.characterId] = character;
-        Debug.Log($"Added/Updated character: {character.CharacterName} (ID: {character.characterId}) in local team roster");
+        Debug.Log($"Added/Updated character: {character.name} (ID: {character.characterId}) in local team roster");
 
         // Save to server and invoke callback on completion
         SaveCharacterData(character, onComplete);
@@ -142,15 +142,15 @@ public class TeamRosterManager : MonoBehaviour
         }
 
         // Update character data
-        character.CurrentLevel = newLevel;
-        character.CurrentXP = newXP;
-        character.MaxHP = newMaxHP;
-        character.MaxEnergy = newMaxEnergy;
+        character.level = newLevel;
+        character.xp = newXP;
+        character.maxHp = newMaxHP;
+        character.maxEnergy = newMaxEnergy;
 
-        Debug.Log($"Leveled up character: {character.CharacterName} (ID: {characterId}) to level {newLevel}");
+        Debug.Log($"Leveled up character: {character.name} (ID: {characterId}) to level {newLevel}");
 
         // Save to server
-        SaveCharacterData(character);
+        SaveCharacterData(character, null);
     }
 
     /// <summary>
@@ -174,10 +174,10 @@ public class TeamRosterManager : MonoBehaviour
 
         // Add the passive skill
         character.LearnedPassives.Add(passiveSkill);
-        Debug.Log($"Added passive skill to character: {character.CharacterName} (ID: {characterId})");
+        Debug.Log($"Added passive skill to character: {character.name} (ID: {characterId})");
 
         // Save to server
-        SaveCharacterData(character);
+        SaveCharacterData(character, null);
     }
 
     /// <summary>
@@ -204,25 +204,25 @@ public class TeamRosterManager : MonoBehaviour
 
         if (saveSuccess)
         {
-            Debug.Log($"Successfully saved character {character.CharacterName} (ID: {character.characterId}) on first attempt.");
+            Debug.Log($"Successfully saved character {character.name} (ID: {character.characterId}) on first attempt.");
             onComplete?.Invoke(true, string.Empty);
             yield break; // Exit coroutine if successful
         }
 
         // If first attempt failed, retry once
-        Debug.LogWarning($"First attempt to save character data failed for {character.CharacterName} (ID: {character.characterId}). Retrying...");
+        Debug.LogWarning($"First attempt to save character data failed for {character.name} (ID: {character.characterId}). Retrying...");
         yield return new WaitForSeconds(1f); // Optional: Add a small delay before retry
         yield return networkManager.SaveCharacterData(character, success => saveSuccess = success);
 
         // Check result after retry
         if (saveSuccess)
         {
-             Debug.Log($"Successfully saved character {character.CharacterName} (ID: {character.characterId}) on second attempt.");
+             Debug.Log($"Successfully saved character {character.name} (ID: {character.characterId}) on second attempt.");
              message = string.Empty; // Success message is empty
         }
         else
         {
-            message = $"Failed to sync progress with server for character {character.CharacterName} (ID: {character.characterId}) after retry.";
+            message = $"Failed to sync progress with server for character {character.name} (ID: {character.characterId}) after retry.";
             Debug.LogError(message);
             // Provide a user-friendly message for the callback
             message = "Failed to save character data. Please check connection and try again.";
@@ -259,7 +259,7 @@ public class TeamRosterManager : MonoBehaviour
     {
         foreach (CharacterData character in teamRoster.Values)
         {
-            if (character.CharacterName == name)
+            if (character.name == name)
             {
                 return character;
             }
@@ -286,7 +286,7 @@ public class TeamRosterManager : MonoBehaviour
     {
         if (teamRoster.TryGetValue(characterId, out CharacterData character))
         {
-            string name = character.CharacterName;
+            string name = character.name;
             teamRoster.Remove(characterId);
             Debug.Log($"Removed character: {name} (ID: {characterId}) from the team roster");
             return true;

@@ -1893,7 +1893,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1015811952
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1953,7 +1953,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 1015811954}
   m_OnClick:
     m_PersistentCalls:
@@ -2925,7 +2925,6 @@ MonoBehaviour:
   usernameInput: {fileID: 1284072252}
   passwordInput: {fileID: 2094369618}
   loginButton: {fileID: 98045186}
-  networkManager: {fileID: 1832167892}
   loadingUIManager: {fileID: 530547596}
 --- !u!1 &2094369616
 GameObject:

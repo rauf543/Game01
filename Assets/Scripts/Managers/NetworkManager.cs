@@ -190,17 +190,29 @@ public class NetworkManager : MonoBehaviour
     {
         // Ensure trailing slash on baseUrl if not present, then append path
         string baseUrl = backendConfig.baseUrl.EndsWith("/") ? backendConfig.baseUrl : backendConfig.baseUrl + "/";
-        string url = $"{baseUrl}api/player/save_character_data";
+        string url = $"{baseUrl}api/player/character";
         
         // Convert CharacterData to JSON
         string jsonData = JsonUtility.ToJson(characterData);
-        
+        Debug.Log("Serialized JSON: " + jsonData); // Added for debugging serialization
         using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
         {
             byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
+
+            // Add authentication header using User ID
+            if (!string.IsNullOrEmpty(authenticatedUserId))
+            {
+                request.SetRequestHeader("X-User-ID", authenticatedUserId);
+                Debug.Log($"[NetworkManager] SaveCharacterData: Setting X-User-ID header to {authenticatedUserId}"); // Optional: Debug log
+            }
+            else
+            {
+                Debug.LogWarning("SaveCharacterData called but no user is authenticated. Request might fail.");
+                // Depending on requirements, you might want to prevent the request here or handle differently
+            }
 
             yield return request.SendWebRequest();
 
