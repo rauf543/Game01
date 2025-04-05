@@ -136,8 +136,7 @@ Debug.Log($"Character {character.characterId} granted {xpAmount} XP. Current XP:
                 TeamRosterManager teamRoster = FindObjectOfType<TeamRosterManager>();
                 if (teamRoster != null)
                 {
-                    teamRoster.AddCharacter(character);
-                    OnSaveComplete(true, character);
+                    teamRoster.AddCharacter(character, (success, message) => OnSaveComplete(success, character));
                 }
                 else
                 {
