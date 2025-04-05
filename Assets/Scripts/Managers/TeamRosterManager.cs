@@ -82,11 +82,11 @@ public class TeamRosterManager : MonoBehaviour
             if (!string.IsNullOrEmpty(character.characterId))
             {
                 teamRoster[character.characterId] = character;
-                Debug.Log($"Added character: {character.CharacterName} (ID: {character.characterId}) to the team roster");
+                Debug.Log($"Added character: {character.name} (ID: {character.characterId}) to the team roster");
             }
             else
             {
-                Debug.LogWarning($"Character {character.CharacterName} has no ID and was not added to roster");
+                Debug.LogWarning($"Character {character.name} has no ID and was not added to roster");
             }
         }
         
@@ -114,7 +114,7 @@ public class TeamRosterManager : MonoBehaviour
 
         // Add to local dictionary
         teamRoster[character.characterId] = character;
-        Debug.Log($"Added character: {character.CharacterName} (ID: {character.characterId}) to the team roster");
+        Debug.Log($"Added character: {character.name} (ID: {character.characterId}) to the team roster");
 
         // Save to server
         SaveCharacterData(character);
@@ -137,12 +137,12 @@ public class TeamRosterManager : MonoBehaviour
         }
 
         // Update character data
-        character.CurrentLevel = newLevel;
-        character.CurrentXP = newXP;
-        character.MaxHP = newMaxHP;
-        character.MaxEnergy = newMaxEnergy;
+        character.level = newLevel;
+        character.xp = newXP;
+        character.maxHp = newMaxHP;
+        character.maxEnergy = newMaxEnergy;
 
-        Debug.Log($"Leveled up character: {character.CharacterName} (ID: {characterId}) to level {newLevel}");
+        Debug.Log($"Leveled up character: {character.name} (ID: {characterId}) to level {newLevel}");
 
         // Save to server
         SaveCharacterData(character);
@@ -169,7 +169,7 @@ public class TeamRosterManager : MonoBehaviour
 
         // Add the passive skill
         character.LearnedPassives.Add(passiveSkill);
-        Debug.Log($"Added passive skill to character: {character.CharacterName} (ID: {characterId})");
+        Debug.Log($"Added passive skill to character: {character.name} (ID: {characterId})");
 
         // Save to server
         SaveCharacterData(character);
@@ -198,13 +198,13 @@ public class TeamRosterManager : MonoBehaviour
         // If first attempt failed, retry once
         if (!saveSuccess)
         {
-            Debug.LogWarning($"First attempt to save character data failed for {character.CharacterName} (ID: {character.characterId}). Retrying...");
+            Debug.LogWarning($"First attempt to save character data failed for {character.name} (ID: {character.characterId}). Retrying...");
             yield return networkManager.SaveCharacterData(character, success => saveSuccess = success);
             
             // If retry also failed, notify user
             if (!saveSuccess)
             {
-                Debug.LogError($"Failed to sync progress with server for character {character.CharacterName} (ID: {character.characterId}) after retry");
+                Debug.LogError($"Failed to sync progress with server for character {character.name} (ID: {character.characterId}) after retry");
                 // Show notification to user (in a real implementation, this would use a UI manager or similar)
                 Debug.LogError("Failed to sync progress with server. Please check connection.");
             }
@@ -236,7 +236,7 @@ public class TeamRosterManager : MonoBehaviour
     {
         foreach (CharacterData character in teamRoster.Values)
         {
-            if (character.CharacterName == name)
+            if (character.name == name)
             {
                 return character;
             }
@@ -263,7 +263,7 @@ public class TeamRosterManager : MonoBehaviour
     {
         if (teamRoster.TryGetValue(characterId, out CharacterData character))
         {
-            string name = character.CharacterName;
+            string name = character.name;
             teamRoster.Remove(characterId);
             Debug.Log($"Removed character: {name} (ID: {characterId}) from the team roster");
             return true;

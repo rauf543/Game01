@@ -12,6 +12,12 @@ EditorBuildSettings:
     path: Assets/Scenes/GuildHall.unity
     guid: 78b0057ac043641719bdee93c9c91c3a
   - enabled: 1
+    path: Assets/Scenes/CreateCharacter.unity
+    guid: e25886881db55384abd21ad7333eb288
+  - enabled: 1
+    path: Assets/Scenes/MissionMap.unity
+    guid: 11a4bdfc3f74941b5ab5e013b8e9a13f
+  - enabled: 1
     path: Assets/Scenes/Combat.unity
     guid: 48a27505c2113413284c44b3d086defa
   m_configObjects:

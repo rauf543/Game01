@@ -44,7 +44,7 @@ public class CombatManager : MonoBehaviour
         foreach (var data in playerTeamData)
         {
             // GameObject playerGO = Instantiate(Character_Prefab, GetPlayerSpawnPosition(), Quaternion.identity);
-            GameObject playerGO = new GameObject($"Player_{data.CharacterName}_Runtime"); // Placeholder GameObject
+            GameObject playerGO = new GameObject($"Player_{data.name}_Runtime"); // Placeholder GameObject
             CharacterCombat combatComp = playerGO.AddComponent<CharacterCombat>(); // Add component if not on prefab
             // CharacterCombat combatComp = playerGO.GetComponent<CharacterCombat>(); // Get component if already on prefab
 
@@ -56,7 +56,7 @@ public class CombatManager : MonoBehaviour
             }
             else
             {
-                Debug.LogError($"Failed to get CharacterCombat for player {data.CharacterName}");
+                Debug.LogError($"Failed to get CharacterCombat for player {data.name}");
             }
         }
 
@@ -175,6 +175,14 @@ public class CombatManager : MonoBehaviour
 
 
         OnCombatEnd?.Invoke(playerWon);
+    }
+
+    /// <summary>
+    /// Returns the list of active player combatants.
+    /// </summary>
+    public List<CharacterCombat> GetPlayerCombatants()
+    {
+        return playerCharacters;
     }
 
     // --- Helper Placeholder Methods ---

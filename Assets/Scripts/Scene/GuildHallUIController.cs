@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-
+using UnityEngine.SceneManagement; // Added for scene loading
 /// <summary>
 /// Handles UI interactions for the Guild Hall scene.
 /// </summary>
@@ -11,7 +11,8 @@ public class GuildHallUIController : MonoBehaviour
     [SerializeField] private Button missionMapButton;
     [SerializeField] private Button characterSelectionButton;
     [SerializeField] private Button refreshRosterButton;
-    
+    public Button createCharacterButton; // Button to navigate to character creation
+
     [Header("Managers")]
     // TeamRosterManager is found dynamically as it persists across scenes
     private TeamRosterManager teamRosterManager;
@@ -58,7 +59,17 @@ public class GuildHallUIController : MonoBehaviour
             refreshRosterButton.onClick.AddListener(OnRefreshRosterClicked);
             interactableButtons.Add(refreshRosterButton);
         }
+if (createCharacterButton != null)
+{
+    createCharacterButton.onClick.AddListener(NavigateToCreateCharacter);
+    interactableButtons.Add(createCharacterButton);
+}
+else
+{
+     Debug.LogWarning("Create Character Button reference not assigned in the Inspector."); // Use Warning as it might be optional
+}
 
+// Find the TeamRosterManager instance dynamically
         // Find the TeamRosterManager instance dynamically
         teamRosterManager = FindFirstObjectByType<TeamRosterManager>();
         
@@ -166,6 +177,15 @@ public class GuildHallUIController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Loads the Create Character scene.
+    /// This method should be linked to a UI button in the Unity Editor.
+    /// </summary>
+    public void NavigateToCreateCharacter()
+    {
+        SceneManager.LoadScene("CreateCharacter");
+    }
+
     private void OnDestroy()
     {
         // Unsubscribe from events
@@ -184,6 +204,11 @@ public class GuildHallUIController : MonoBehaviour
         if (refreshRosterButton != null)
         {
             refreshRosterButton.onClick.RemoveListener(OnRefreshRosterClicked);
+        }
+        
+        if (createCharacterButton != null)
+        {
+            createCharacterButton.onClick.RemoveListener(NavigateToCreateCharacter);
         }
     }
 }

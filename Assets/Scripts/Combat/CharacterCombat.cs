@@ -14,6 +14,7 @@ namespace Game01.Combat
         public int MaxHP;
         public int CurrentShield = 0;
         public List<ActiveStatusEffect> ActiveEffects = new List<ActiveStatusEffect>();
+        public CharacterData Data { get; private set; }
 
         /// <summary>
         /// Initializes the character's combat state based on persistent data.
@@ -24,10 +25,11 @@ namespace Game01.Combat
         {
             if (persistentData != null)
             {
-                // Use the MaxHP field from CharacterData
-                MaxHP = persistentData.MaxHP;
-                CurrentHP = persistentData.MaxHP;
-            }
+                Data = persistentData; // Store the reference
+                // Use the maxHp field from CharacterData
+                MaxHP = persistentData.maxHp;
+                CurrentHP = persistentData.maxHp;
+            } // End of if (persistentData != null)
             else
             {
                 Debug.LogError("CharacterData is null during CharacterCombat initialization!", this);
